@@ -5,6 +5,7 @@ import com.algaworks.algasensors.temperature.processing.common.IdGenerator;
 import io.hypersistence.tsid.TSID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,10 @@ public class TemperatureProcessorController {
         String routingKey = "";
         Object payload = logOutput;
 
-        rabbitTemplate.convertAndSend(exchangeName, routingKey, payload);
+        MessagePostProcessor messagePostProcessor = (MessagePostProcessor) message -> {
+            message.getMessageProperties().setHeader("sensorId", logOutput.getSensorId().toString());
+            return message;
+        };
+        rabbitTemplate.convertAndSend(exchangeName, routingKey, payload, messagePostProcessor);
     }
 }
